@@ -1,0 +1,162 @@
+name: Publish AUR packages
+
+on:
+  repository_dispatch:
+    types: [opentubex-release]
+  workflow_dispatch:
+    inputs:
+      releaseTag:
+        description: Release tag to publish (for example, v0.29.0-beta)
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aur-packages
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish opentubex packages
+    runs-on: ubuntu-latest
+    container: archlinux:base-devel
+    env:
+      AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Install tools
+        run: pacman --sync --refresh --sysupgrade --noconfirm git github-cli openssh
+
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.2
+
+      - name: Resolve release
+        id: release
+        shell: bash
+        env:
+          INPUT_TAG: ${{ github.event.client_payload.tag || inputs.releaseTag }}
+        run: |
+          set -euo pipefail
+          tag="$INPUT_TAG"
+
+          if [[ -z "$tag" ]]; then
+            tag="$(gh release view --repo OpenTubeX/OpenTubeX --json tagName --jq .tagName)"
+          fi
+
+          if [[ ! "$tag" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)-beta$ ]]; then
+            echo "Expected a tag like v0.29.0-beta, got: $tag" >&2
+            exit 1
+          fi
+
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=${BASH_REMATCH[1]}" >> "$GITHUB_OUTPUT"
+
+      - name: Download release files
+        env:
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+          VERSION: ${{ steps.release.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir release-files
+          gh release download "$RELEASE_TAG" \
+            --repo OpenTubeX/OpenTubeX \
+            --dir release-files \
+            --pattern "opentubex_${VERSION}_beta_amd64.deb" \
+            --pattern "opentubex_${VERSION}_beta_arm64.deb"
+          gh release download "$RELEASE_TAG" \
+            --repo OpenTubeX/OpenTubeX \
+            --archive tar.gz \
+            --output release-files/source.tar.gz
+
+      - name: Update package metadata
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          amd64_checksum="$(sha256sum "release-files/opentubex_${VERSION}_beta_amd64.deb" | cut -d ' ' -f 1)"
+          arm64_checksum="$(sha256sum "release-files/opentubex_${VERSION}_beta_arm64.deb" | cut -d ' ' -f 1)"
+          source_checksum="$(sha256sum release-files/source.tar.gz | cut -d ' ' -f 1)"
+
+          sed -i -E "s/^pkgver=.*/pkgver=${VERSION}/" opentubex-bin/PKGBUILD
+          sed -i -E "s/^sha256sums_x86_64=.*/sha256sums_x86_64=('${amd64_checksum}')/" opentubex-bin/PKGBUILD
+          sed -i -E "s/^sha256sums_aarch64=.*/sha256sums_aarch64=('${arm64_checksum}')/" opentubex-bin/PKGBUILD
+
+          sed -i -E "s/^pkgver=.*/pkgver=${VERSION}/" opentubex/PKGBUILD
+          sed -i -E "0,/^sha256sums=\('[^']*'/s//sha256sums=('${source_checksum}'/" opentubex/PKGBUILD
+
+          useradd --create-home builder
+          chown -R builder:builder opentubex-bin opentubex
+          for package in opentubex-bin opentubex; do
+            runuser -u builder -- bash -c "cd '$GITHUB_WORKSPACE/$package' && makepkg --printsrcinfo" \
+              > "$package/.SRCINFO"
+          done
+          chown -R root:root opentubex-bin opentubex
+
+      - name: Commit package metadata
+        env:
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add opentubex-bin/PKGBUILD opentubex-bin/.SRCINFO \
+            opentubex/PKGBUILD opentubex/.SRCINFO
+
+          if git diff --cached --quiet; then
+            echo "Package metadata already up to date for ${RELEASE_TAG}"
+          else
+            git diff --cached --check
+            git commit --no-verify -m "Update packages for ${RELEASE_TAG}"
+            git push
+          fi
+
+      - name: Configure AUR access
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$AUR_SSH_PRIVATE_KEY" ]]; then
+            echo 'The AUR_SSH_PRIVATE_KEY secret is not configured.' >&2
+            exit 1
+          fi
+
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$AUR_SSH_PRIVATE_KEY" > ~/.ssh/aur
+          chmod 600 ~/.ssh/aur
+          printf '%s\n' \
+            'aur.archlinux.org ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEuBKrPzbawxA/k2g6NcyV5jmqwJ2s+zpgZGZ7tpLIcN' \
+            > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+          git config --global core.sshCommand \
+            "ssh -i $HOME/.ssh/aur -o IdentitiesOnly=yes -o HostKeyAlgorithms=ssh-ed25519 -o UserKnownHostsFile=$HOME/.ssh/known_hosts -o StrictHostKeyChecking=yes"
+          git config --global user.name 'OpenTubeX Release Bot'
+          git config --global user.email 'actions@github.com'
+
+      - name: Publish packages
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir aur-packages
+
+          for package in opentubex-bin opentubex; do
+            git clone "ssh://aur@aur.archlinux.org/${package}.git" "aur-packages/$package"
+            git -C "aur-packages/$package" rm --recursive --ignore-unmatch .
+            cp -a "$package/." "aur-packages/$package/"
+            git -C "aur-packages/$package" add --all
+
+            if git -C "aur-packages/$package" diff --cached --quiet; then
+              echo "$package is already at ${VERSION}"
+              continue
+            fi
+
+            git -C "aur-packages/$package" diff --cached --check
+            git -C "aur-packages/$package" commit -m "update to ${VERSION}"
+            git -C "aur-packages/$package" push origin master
+          done
