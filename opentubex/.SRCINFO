@@ -8,12 +8,12 @@ pkgbase = opentubex
 	makedepends = git
 	makedepends = npm
 	makedepends = pnpm
-	depends = electron41
+	depends = electron43
 	source = opentubex-0.27.0.tar.gz::https://github.com/OpenTubeX/OpenTubeX/archive/refs/tags/v0.27.0-beta.tar.gz
 	source = opentubex.desktop
 	source = opentubex.sh
 	sha256sums = b7abe75d0f4c2cf08aee18ca05513307e71da5eea8fe54e8d15ccb6e1d46a3c8
 	sha256sums = 63154cb6dd377c8d70714bb858405f95d88a849815d86bf7cf1b6b344cc54b5d
-	sha256sums = 0f70946cec21a754755120e37c7f7d69e48c1c87a9c0d6e5f71363b1cafaf4cb
+	sha256sums = ed9c3c54f5604389cac2e53df7f917ce6952a870abc409464e5b8ba590ca3d07
 
 pkgname = opentubex
