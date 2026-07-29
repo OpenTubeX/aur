@@ -148,7 +148,7 @@ jobs:
 
           for package in opentubex-bin opentubex; do
             git clone "ssh://aur@aur.archlinux.org/${package}.git" "aur-packages/$package"
-            git -C "aur-packages/$package" rm --recursive --ignore-unmatch .
+            git -C "aur-packages/$package" rm -r --ignore-unmatch .
             cp -a "$package/." "aur-packages/$package/"
             git -C "aur-packages/$package" add --all
 
