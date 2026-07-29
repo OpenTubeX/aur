@@ -3,4 +3,3 @@ source = "git"
 git = "https://github.com/OpenTubeX/OpenTubeX.git"
 from_pattern = 'v(\d*?\.\d*?\.\d*?)-beta'
 to_pattern = '\g<1>'
-
