@@ -113,7 +113,9 @@ jobs:
           else
             git diff --cached --check
             git commit --no-verify -m "Update packages for ${RELEASE_TAG}"
-            git push
+            git fetch origin main
+            git rebase origin/main
+            git push origin HEAD:main
           fi
 
       - name: Configure AUR access
