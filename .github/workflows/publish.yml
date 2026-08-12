@@ -160,6 +160,6 @@ jobs:
             fi
 
             git -C "aur-packages/$package" diff --cached --check
-            git -C "aur-packages/$package" commit -m "update to ${VERSION}"
+            git log -1 --format=%B | git -C "aur-packages/$package" commit --file=-
             git -C "aur-packages/$package" push origin master
           done
