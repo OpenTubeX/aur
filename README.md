@@ -12,7 +12,8 @@ repository sends an `opentubex-release` repository dispatch containing the
 release tag. The publish workflow then:
 
 1. starts with the package files tracked in this repository;
-2. updates only `pkgver`, release checksums, and the generated `.SRCINFO` files;
+2. updates `pkgver`, resets `pkgrel` to 1, and refreshes release checksums and
+   the generated `.SRCINFO` files;
 3. commits that release metadata back to this repository;
 4. copies the resulting files to the two AUR repositories and publishes each
    package when its files changed.

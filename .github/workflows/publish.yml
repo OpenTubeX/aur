@@ -81,10 +81,16 @@ jobs:
           arm64_checksum="$(sha256sum "release-files/opentubex_${VERSION}_beta_arm64.deb" | cut -d ' ' -f 1)"
           source_checksum="$(sha256sum release-files/source.tar.gz | cut -d ' ' -f 1)"
 
+          if ! grep -qxF "pkgver=${VERSION}" opentubex-bin/PKGBUILD; then
+            sed -i -E "s/^pkgrel=.*/pkgrel=1/" opentubex-bin/PKGBUILD
+          fi
           sed -i -E "s/^pkgver=.*/pkgver=${VERSION}/" opentubex-bin/PKGBUILD
           sed -i -E "s/^sha256sums_x86_64=.*/sha256sums_x86_64=('${amd64_checksum}')/" opentubex-bin/PKGBUILD
           sed -i -E "s/^sha256sums_aarch64=.*/sha256sums_aarch64=('${arm64_checksum}')/" opentubex-bin/PKGBUILD
 
+          if ! grep -qxF "pkgver=${VERSION}" opentubex/PKGBUILD; then
+            sed -i -E "s/^pkgrel=.*/pkgrel=1/" opentubex/PKGBUILD
+          fi
           sed -i -E "s/^pkgver=.*/pkgver=${VERSION}/" opentubex/PKGBUILD
           sed -i -E "0,/^sha256sums=\('[^']*'/s//sha256sums=('${source_checksum}'/" opentubex/PKGBUILD
 
