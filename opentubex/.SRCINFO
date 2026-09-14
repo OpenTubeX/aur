@@ -1,7 +1,7 @@
 pkgbase = opentubex
 	pkgdesc = A highly customizable, privacy-focused desktop YouTube client
 	pkgver = 0.34.1
-	pkgrel = 2
+	pkgrel = 1
 	url = https://opentubex.org
 	arch = any
 	license = AGPL-3.0-or-later
@@ -15,7 +15,7 @@ pkgbase = opentubex
 	source = opentubex.desktop
 	source = opentubex.sh
 	sha256sums = f6c3b3cac88ebdedaa6ac85c63bd6a22ea916e639d6f37b037a4e18d1f7eddf7
-	sha256sums = 03448152a98649991bc6a1f1c74fa20fb43d729f5aa7d2a17d0b2074b22a08f2
+	sha256sums = 63154cb6dd377c8d70714bb858405f95d88a849815d86bf7cf1b6b344cc54b5d
 	sha256sums = ed9c3c54f5604389cac2e53df7f917ce6952a870abc409464e5b8ba590ca3d07
 
 pkgname = opentubex
