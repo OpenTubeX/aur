@@ -6,7 +6,7 @@ _pkgname=OpenTubeX
 _ghurl="https://github.com/OpenTubeX/OpenTubeX"
 pkgver=0.35.2
 _pkgver="$pkgver-beta"
-pkgrel=2
+pkgrel=3
 pkgdesc='A highly customizable, privacy-focused desktop YouTube client'
 arch=('any')
 url="https://opentubex.org"
@@ -36,6 +36,9 @@ prepare() {
 
 build() {
   cd "$srcdir/$_pkgname-$_pkgver"
+  # Keep build temporary files off the quota-limited /tmp filesystem.
+  export TMPDIR="$srcdir/tmp"
+  mkdir -p "$TMPDIR"
   pnpm install --frozen-lockfile
   pnpm build
 }
