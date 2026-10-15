@@ -158,6 +158,54 @@ class PublishTests(unittest.TestCase):
                 result = self.run_step('Resolve release', INPUT_TAG=tag, EVENT_TYPE=event)
                 self.assertNotEqual(result.returncode, 0)
 
+    def test_aur_network_operations_retry_twice(self):
+        self.stub('sleep', 'printf "%s\\n" "$*" >> "$GITHUB_WORKSPACE/delays"\n')
+        self.stub('git', '''
+if [[ "$1" == -C ]]; then
+  shift 2
+fi
+operation="$1"
+printf '%s\\n' "$operation" >> "$GITHUB_WORKSPACE/git-calls"
+if [[ "$operation" == clone || "$operation" == push ]]; then
+  counter="$GITHUB_WORKSPACE/attempts-$operation"
+  count=0
+  if [[ -f "$counter" ]]; then
+    read -r count < "$counter"
+  fi
+  count=$((count + 1))
+  printf '%s\\n' "$count" > "$counter"
+  if [[ "$operation" == "$FAIL_OPERATION" ]] && (( count <= FAILURES )); then
+    echo 'Connection closed by AUR' >&2
+    exit 128
+  fi
+fi
+case "$operation" in
+  clone) mkdir -p "$3" ;;
+  diff) [[ "$3" != --quiet ]] ;;
+  log) echo 'test release' ;;
+  commit) cat > /dev/null ;;
+esac
+''')
+        for operation in ('clone', 'push'):
+            for failures in range(4):
+                with self.subTest(operation=operation, failures=failures):
+                    shutil.rmtree(self.directory / 'aur-packages', ignore_errors=True)
+                    for name in ('attempts-clone', 'attempts-push', 'delays', 'git-calls'):
+                        (self.directory / name).unlink(missing_ok=True)
+                    result = self.run_step('Publish packages', VERSION='0.36.1',
+                                           PACKAGES='opentubex-nightly-bin',
+                                           FAIL_OPERATION=operation, FAILURES=str(failures))
+                    self.assertEqual(result.returncode, 128 if failures == 3 else 0,
+                                     result.stderr)
+                    attempts = int((self.directory / f'attempts-{operation}').read_text())
+                    self.assertEqual(attempts, min(failures + 1, 3))
+                    delays = self.directory / 'delays'
+                    self.assertEqual(delays.read_text().splitlines() if delays.exists() else [],
+                                     ['10'] * min(failures, 2))
+                    calls = (self.directory / 'git-calls').read_text().splitlines()
+                    self.assertEqual(calls.count('commit'),
+                                     0 if operation == 'clone' and failures == 3 else 1)
+
     def test_arch_upgrade_order(self):
         versions = ['0.36.0.nightly.2111', '1:0.36.0nightly.2111',
                     '1:0.36.0nightly.2112', '1:0.36.0',
