@@ -3,6 +3,7 @@ pkgbase = opentubex
 	pkgver = 0.37.0
 	pkgrel = 1
 	url = https://opentubex.org
+	changelog = opentubex.changelog
 	arch = any
 	license = AGPL-3.0-or-later
 	makedepends = git

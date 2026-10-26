@@ -1,0 +1,242 @@
+opentubex (0.37.0) stable; urgency=medium
+
+  [ Highlights ]
+  * Navigation, quick settings, player controls and fullscreen actions are now
+    customized on one "Customize interface" page in Appearance settings, with a
+    live preview of each. Its Control bar tab hides and reorders the player's
+    control bar buttons
+  * You can now hide AI slop channels with the community-maintained AiSList.
+    Turn on "Hide AI slop channels" under Settings → Add-ons to hide listed
+    channels from search results and recommendations and to tag videos from
+    channels that likely post AI-generated content.
+  * Added home screen widgets on Android and iOS. Continue watching resumes your
+    latest unfinished videos where you left off, and Quick access opens Search,
+    Subscriptions or Watch Later.
+  * Turn on the new bell in a channel's subscribe button to get a system
+    notification when it uploads a video, short, live stream or post. You can
+    choose specific types per channel from the subscribe button's settings menu
+    or in the subscription settings.
+  * Sort your subscriptions into groups to filter the feed and channel list, and
+    arrange channels in a custom order with drag and drop
+  * Connect your own Yattee server in Settings → Advanced to load videos,
+    channels, and search results from it and stream videos through it
+  * Desktop: Use Custom Title Bar in Theme settings replaces the system title
+    bar with the tab bar, or with the top navigation when tabs are elsewhere,
+    and keeps the window controls in its corner styled for Windows, macOS,
+    Plasma or GNOME
+
+  [ More improvements ]
+  * Choose whether new videos go to the top or bottom of each playlist's custom
+    order from Edit Playlist Info.
+  * Android builds now target Android 17 and request Nearby devices permission
+    for local network connections.
+  * Search keyboard shortcuts by action, section, or key combination.
+  * Libraries are now stored in SQLite, so editing large playlists and histories
+    saves much faster; your existing library moves over automatically and older
+    versions can still open it
+  * Arrange your playlists in a custom order with drag and drop, and reorder
+    playlists and their videos with the arrow keys
+  * Choose Full Width as the video or playlist view type to show one video per
+    row, and use your Playlist View Type on phones too
+  * Long playlists scroll more smoothly, and switching tabs is faster when many
+    tabs are open
+  * Releases now include signed build provenance, so you can check that a
+    download was built by OpenTubeX's GitHub workflows with gh attestation
+    verify --repo OpenTubeX/OpenTubeX
+  * Subscription feeds show new videos while a large refresh is still running
+    instead of waiting until it finishes
+  * Android APKs are smaller, and new lite APKs of about 15 MiB leave out
+    downloads and other yt-dlp features for devices with little storage
+  * Swiping with the Bookmark gesture inside the bookmark playlist now removes
+    the video from it
+  * On Android, the app stays more responsive while it syncs and refreshes
+    subscriptions after opening
+  * Show a privacy warning when an Invidious fallback bypasses your instance and
+    connects directly to YouTube.
+  * Desktop users can schedule complete local backups to a chosen folder and
+    limit how many backups are kept.
+  * The desktop app uses about 55 MB less memory when the tray icon is enabled
+    on Linux and Windows
+  * Choose how many columns video and playlist grids show, or keep Auto to fit
+    them to the window
+  * History opens faster with a large watch history, and its channel filter
+    loads channels as you scroll.
+  * Boost quiet videos up to 200% volume from the player's settings menu after
+    turning on Show Volume Boost Toggle in Playback settings
+  * Pair a new device by scanning a code shown on a connected device, so a
+    connected computer without a camera can add a phone
+  * On Android, the app opens faster with a large library and stays responsive
+    with many tabs open
+  * Automatic downloads can wait until your device is charging, or on Android
+    until it is on an unmetered network
+  * When Settings or Downloads is moved to the app header, its window now opens
+    out of and closes back into its header button
+  * On Android, the predictive back gesture now previews going back through
+    pages, dropdowns, context menus, the search bar, the Tab Organizer and the
+    side navigation
+  * Pin playlists and channels to the side navigation, or the More menu on
+    phones, to open them from any page
+  * On Android, closed-app subscription refreshes skip channels without new
+    content, so the app has less to import when you open it
+  * Hide the swipe-to-seek popup with the new "Show swipe-to-seek preview"
+    option in Playback settings while keeping the seek-bar feedback.
+  * Fullscreen panels now open as full-width, draggable bottom panels in
+    portrait, including the queue during offline audio playback.
+  * Downloads now use compact rows with visible thumbnails, an actions menu, and
+    full file information in Details.
+  * Swipe again to reverse queue, Play Next, fully watched, and download
+    actions. These shortcuts also work in Downloads.
+  * Choose Google Sans as a bundled app font in Appearance settings.
+  * Show a second caption track at the same time as the main captions, and keep
+    the auto-translation picked in the player for later videos
+  * Watching external media now counts towards your watch statistics
+  * Save the watch queue to a new or existing playlist, and add a whole playlist
+    to the end of the queue from its playlist page.
+  * Dragging a tab to either end of a tab bar with a scrollbar now scrolls the
+    tab bar, so you can drop the tab next to tabs that were out of view.
+  * Import per-channel playback speeds from the Youtube Speed By Channel
+    userscript under Settings → Data & Storage → Advanced.
+  * Video cards now show the channel name on its own line, with the view count
+    and upload date below it, each marked with an icon.
+  * Quick settings can now include 32 more settings, such as Hide Video Views,
+    Hide Live Streams, Reduced Motion, Toast Position, Loop Shorts and Remember
+    Volume
+  * Choose a preferred video codec in Advanced settings, and switch between a
+    video's codecs in the quality menu for either playback engine.
+  * Playlist pages now label their main actions and group the rest in a More
+    menu. Custom quick bookmark icons also show in playlist menus instead of a
+    plain circle.
+  * Turn on Enable Seek History in Playback settings to get back to where you
+    were after a misclicked seek. The player menu lists the positions you jumped
+    away from, and Ctrl+Z and Ctrl+Shift+Z step back and forward through them.
+  * Exporting and importing large backups no longer freezes the window, and
+    videos open sooner when the pointer rests on them before the click
+  * Settings and Downloads open, close, minimize and restore smoothly on slower
+    systems and while the app is busy
+  * On Android, Settings → Playback → Quality Limit on Metered Networks makes
+    videos start at a lower quality on mobile data and other metered networks
+  * The app opens, refreshes subscriptions, loads channels and switches between
+    videos faster
+  * The buttons below the video are now grouped into one toolbar, with a labeled
+    Download button that shrinks to an icon when space is tight
+  * Brightness, volume and playback speed swipes now show only their indicator
+    instead of revealing the player controls
+  * Turn on diagnostic logging in Settings > Advanced > Diagnostics to copy or
+    save a report for bug reports, with cookies, tokens, IP addresses and URL
+    parameters removed
+  * Downloaded videos now show a badge on their thumbnails, and opening one
+    plays the downloaded file instead of streaming it.
+  * Pinned tabs show their pin as a small badge on the tab icon, which leaves
+    more room for the title
+  * Settings → Playback → Channel Settings now has one switch that turns channel
+    playback settings on or off instead of one per setting. The other switches
+    save changes automatically.
+  * Load a local SRT or WebVTT subtitle file for a video from the captions menu
+  * Set a playlist to shuffle by default from Edit Playlist Info, so it plays in
+    random order from a random first video.
+  * Leaving a video or switching to another tab now shrinks the video into the
+    mini player with the same animation as scrolling past it.
+  * Video cards now mark music videos with a music note, and music videos opened
+    from lists, the queue or autoplay start at normal speed
+  * Each playlist now remembers its own sort order, and encrypted sync carries
+    it to your other devices.
+
+  [ Fixed bugs ]
+  * Fixed the missing OpenTubeX app icon on macOS.
+  * Clearing a channel search right after submitting it no longer reloads the
+    channel and resets its sort order.
+  * Fixed the oversized tray icon in the macOS menu bar.
+  * Made quick Ctrl+Tab and Ctrl+Shift+Tab switches skip menu rendering and
+    preview loading. Holding Control still opens the tab switcher.
+  * Resume at the current playback position when opening a video tab on another
+    device, even before watch history syncs.
+  * Fix clipped page previews while swiping into the mobile tab organizer and
+    animate opening it by tapping its button.
+  * Tap the mobile audio player to hide or show its controls.
+  * Fixed stuck channel search spinners, repeated watched-history writes, stale
+    sync history paging and cached image errors, and made comment filtering, tab
+    updates and yt-dlp playback start faster.
+  * Enabled toggles, such as the settings header buttons with Dynamic colors, no
+    longer look the same as tapped, hovered or focused ones
+  * Fixed the large gap below the search field on playlist pages in narrow
+    windows
+  * OpenTubeX unloads inactive tabs before memory runs out and reloads crashed
+    windows. Advanced settings lets you disable automatic unloading or adjust
+    its memory threshold and unload percentage. Automatically unloaded tabs show
+    a memory badge.
+  * Tapping the mobile mini player opens the video on the first tap, and short
+    flicks now minimize or restore it
+  * Overlapping SponsorBlock segments now show one skip notice with a shield for
+    each skipped category, and Unskip plays the whole range instead of skipping
+    part of it again
+  * Search filters work on Android again
+  * Restored rounded corners on the watch page cards on phones.
+  * Material Black now keeps cards, bars, menus and search fields black instead
+    of tinting them with the wallpaper color
+  * Auto-generated subtitles get one rounded background per line instead of one
+    per word
+  * yt-dlp playback and downloads on desktop now solve YouTube's JavaScript
+    challenges without a separate Deno installation
+  * History sync no longer fails with "You cannot change a document's _id", and
+    duplicate history entries for the same video are cleaned up
+  * Pasted YouTube search links open again, YouTube playlists show their first
+    videos while the rest load, channel links no longer pull you back after
+    navigating away, the download list survives crashes, and hidden Android apps
+    stop syncing in the background
+  * A wide scrollbar no longer blocks clicks on buttons beside it. It stays thin
+    until you point at it
+  * History search results no longer flash a loading spinner when sync or a
+    subscription refresh updates your history
+  * Videos with AI-dubbed audio now default to captions in the original language
+    instead of a transcript of a dub, and caption translations now translate
+    from the original language
+  * External media tabs keep their title when you reopen the same URL.
+  * Fixed excess empty scrolling space below video details on Android, including
+    when recommended videos are hidden or playback is offline.
+  * Fixed the darkened thumbnail end screen sometimes failing to appear after
+    seeking to the end of a paused video.
+  * On Android, swiping down now exits fullscreen entered by rotating the
+    device, including when "Ignore system rotation lock for fullscreen" is
+    enabled.
+  * Restore clickable donor handles in live chat donation messages.
+  * Show playback speed controls for rewindable livestreams and premieres.
+  * A fullscreen actions dock with a single action now centers its button
+    instead of leaving extra space on one side
+  * Shorts now show the subscription settings and notification bell next to the
+    subscribe button, including in fullscreen.
+  * Dragging in the Material accent color picker no longer lags
+  * Fullscreen swipe and double-tap gestures stay on the video when the queue or
+    another panel is open, and the fullscreen queue header fits on one row.
+  * System media controls show the title and thumbnail of external media instead
+    of the previously watched video.
+  * Inactive tabs no longer blend into the tab bar in Black, Dark, Hot Pink,
+    Dynamic colors, the Material themes and a few other themes
+  * Changing the resolution of a video in legacy formats no longer starts it
+    while paused, or pauses it when Start Videos Automatically is off
+  * Expanding the mini player back to its video no longer briefly shows the
+    previous page or its sidebar around the player.
+  * Updated Electron so the desktop app no longer trusts the compromised eMudhra
+    intermediate certificates
+  * Menus opened from the ⋮ button on playlist cards now have touch-sized rows
+    on phones and tablets.
+  * Expanding the mini player back to its video keeps the player's rounded
+    corners instead of briefly showing black corners.
+  * Loading more Home recommendations adds the new videos to the end of the feed
+    instead of reordering the videos already shown
+  * The SponsorBlock submission panel's scrollbar now sits at the panel edge
+    instead of covering the segment fields.
+  * Page titles on Home, Subscriptions, Playlists, History and the other main
+    pages now stay in the same place when you switch pages, and the
+    Subscriptions title no longer crowds the feed tabs on phones
+  * Closing the last window no longer stops background subscription refreshes
+    when the close confirmation is turned off; OpenTubeX hides to the tray
+    instead
+  * On Android and iOS, quick settings and the onboarding tutorial now tell you
+    to tap and hold the profile icon to switch profiles instead of
+    right-clicking it.
+  * Chapters open beside the video like the transcript and SponsorBlock, instead
+    of switching to theatre mode when it is the default viewing mode
+  * The player shows the video's thumbnail again while the video plays in
+    Picture-in-Picture
+
+ -- OpenTubeX contributors <info@opentubex.org>  Fri, 23 Oct 2026 16:29:18 +0000

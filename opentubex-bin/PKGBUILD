@@ -18,6 +18,7 @@ optdepends=('ffmpeg: Use the system FFmpeg when installed before first launch; c
             'yt-dlp: Use the system yt-dlp when installed before first launch; configurable later in Settings')
 provides=("${_pkgname}")
 conflicts=("${_pkgname}")
+changelog=opentubex.changelog
 
 source_x86_64=("${pkgname}-${pkgver}-amd64.deb"::"$_ghurl/releases/download/v$pkgver-beta/${_pkgname}_${pkgver}_beta_amd64.deb")
 source_aarch64=("${pkgname}-${pkgver}-arm64.deb"::"$_ghurl/releases/download/v$pkgver-beta/${_pkgname}_${pkgver}_beta_arm64.deb")

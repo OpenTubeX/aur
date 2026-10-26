@@ -111,8 +111,18 @@ jobs:
           amd64_checksum="$(sha256sum "release-files/opentubex_${ASSET_VERSION}_amd64.deb" | cut -d ' ' -f 1)"
           arm64_checksum="$(sha256sum "release-files/opentubex_${ASSET_VERSION}_arm64.deb" | cut -d ' ' -f 1)"
           read -r -a packages <<< "$PACKAGES"
+          if [[ " $PACKAGES " == *' opentubex-bin '* ]]; then
+            # The deb carries the release notes that the OpenTubeX release build recorded.
+            bsdtar -xOf "release-files/opentubex_${ASSET_VERSION}_amd64.deb" 'data.tar.*' \
+              | bsdtar -xOf - ./usr/share/doc/opentubex/changelog.gz \
+              | gzip -dc > release-files/opentubex.changelog
+          fi
 
           for package in "${packages[@]}"; do
+            if [[ "$package" == 'opentubex' || "$package" == 'opentubex-bin' ]]; then
+              cp release-files/opentubex.changelog "$package/opentubex.changelog"
+            fi
+
             # The VCS recipe keeps its Git-derived version and local file checksums.
             if [[ "$package" == 'opentubex-git' ]]; then
               continue
@@ -151,6 +161,9 @@ jobs:
           read -r -a packages <<< "$PACKAGES"
           for package in "${packages[@]}"; do
             git add "$package/PKGBUILD" "$package/.SRCINFO"
+            if [[ -f "$package/opentubex.changelog" ]]; then
+              git add "$package/opentubex.changelog"
+            fi
           done
 
           if git diff --cached --quiet; then

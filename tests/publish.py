@@ -2,16 +2,34 @@
 """Exercise the publish workflow without downloading or publishing releases."""
 
 import os
+import gzip
 import hashlib
+import io
 from pathlib import Path
 import shutil
 import subprocess
+import tarfile
 import tempfile
 import textwrap
 import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def deb(changelog):
+    """Build a minimal deb whose data archive contains a Debian changelog."""
+    data = io.BytesIO()
+    with tarfile.open(fileobj=data, mode='w:xz') as archive:
+        content = gzip.compress(changelog.encode())
+        member = tarfile.TarInfo('./usr/share/doc/opentubex/changelog.gz')
+        member.size = len(content)
+        archive.addfile(member, io.BytesIO(content))
+    output = b'!<arch>\n'
+    for name, content in ((b'debian-binary', b'2.0\n'), (b'data.tar.xz', data.getvalue())):
+        output += b'%-16s%-12s%-6s%-6s%-8s%-10d`\n' % (name, b'0', b'0', b'0', b'100644', len(content))
+        output += content + (b'\n' if len(content) % 2 else b'')
+    return output
 
 
 def workflow_step(name):
@@ -54,7 +72,7 @@ class PublishTests(unittest.TestCase):
         files = self.directory / 'release-files'
         files.mkdir(exist_ok=True)
         for arch in ('amd64', 'arm64'):
-            (files / f'opentubex_{release["asset_version"]}_{arch}.deb').write_text(arch)
+            (files / f'opentubex_{release["asset_version"]}_{arch}.deb').write_bytes(deb(f'{arch} notes\n'))
         (files / 'source.tar.gz').write_text('source')
         self.stub('useradd', ':\n')
         self.stub('chown', ':\n')
@@ -77,6 +95,15 @@ class PublishTests(unittest.TestCase):
         for package in ('opentubex', 'opentubex-bin'):
             self.assertNotIn('epoch = ', (self.directory / package / '.SRCINFO').read_text())
 
+    def test_stable_packages_ship_the_release_changelog(self):
+        release = self.resolve('v0.36.0-beta', 'opentubex-release')
+        self.metadata(release)
+        for package in ('opentubex', 'opentubex-bin'):
+            self.assertEqual((self.directory / package / 'opentubex.changelog').read_text(), 'amd64 notes\n')
+            self.assertIn('changelog = opentubex.changelog', (self.directory / package / '.SRCINFO').read_text())
+        for package in ('opentubex-nightly-bin', 'opentubex-git'):
+            self.assertFalse((self.directory / package / 'opentubex.changelog').exists())
+
     def test_nightly_only_updates_nightly_package(self):
         release = self.resolve('v0.36.1-nightly-2112', 'opentubex-nightly')
         self.assertEqual(release['packages'], 'opentubex-nightly-bin')
@@ -87,6 +114,8 @@ class PublishTests(unittest.TestCase):
         self.assertIn('epoch = 1', info)
         self.assertIn('/v0.36.1-nightly-2112/opentubex_0.36.1-nightly-2112_amd64.deb', info)
         self.assertEqual((self.directory / 'opentubex-bin/.SRCINFO').read_bytes(), original)
+        self.assertEqual((self.directory / 'opentubex-bin/opentubex.changelog').read_bytes(),
+                         (ROOT / 'opentubex-bin/opentubex.changelog').read_bytes())
 
     def test_stable_downloads_source_archive(self):
         release = self.resolve('v0.36.1-beta')

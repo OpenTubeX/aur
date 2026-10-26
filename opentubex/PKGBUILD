@@ -15,6 +15,7 @@ depends=('electron43')
 optdepends=('ffmpeg: Use the system FFmpeg when installed before first launch; configurable later in Settings'
             'yt-dlp: Use the system yt-dlp when installed before first launch; configurable later in Settings')
 makedepends=('git' 'npm' 'pnpm' 'go')
+changelog=opentubex.changelog
 source=("$pkgname-$pkgver.tar.gz::${_ghurl}/archive/refs/tags/v${pkgver}-beta.tar.gz"
         opentubex.desktop
         opentubex.sh)

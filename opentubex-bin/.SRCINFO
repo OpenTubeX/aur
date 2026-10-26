@@ -3,6 +3,7 @@ pkgbase = opentubex-bin
 	pkgver = 0.37.0
 	pkgrel = 1
 	url = https://opentubex.org
+	changelog = opentubex.changelog
 	arch = x86_64
 	arch = aarch64
 	license = AGPL3
