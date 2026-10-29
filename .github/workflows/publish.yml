@@ -52,7 +52,7 @@ jobs:
 
           if [[ "$tag" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)-nightly-([0-9]+)$ ]]; then
             version="${tag#v}"
-            pkgver="${BASH_REMATCH[1]}nightly.${BASH_REMATCH[2]}"
+            pkgver="${BASH_REMATCH[1]}.nightly.${BASH_REMATCH[2]}"
             asset_version="$version"
             packages='opentubex-nightly-bin'
           elif [[ "$tag" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)-beta$ ]]; then

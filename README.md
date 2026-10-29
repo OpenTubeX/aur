@@ -34,12 +34,12 @@ Stable releases publish all four packages, so nightly users receive the stable
 release too. The `opentubex-git` recipe keeps its Git-derived version, package
 release number, and checksums. Nightly releases update only `opentubex-nightly-bin`.
 
-The nightly package uses epoch `1` and versions such as `0.36.0nightly.2111`
+The nightly package uses epoch `1` and versions such as `0.36.0.nightly.2111`
 for tag `v0.36.0-nightly-2111`, or `0.36.0` for tag `v0.36.0-beta`.
-Arch sorts the nightly version before the stable version with the same base
-version. The epoch lets existing installations upgrade from the previously
-published `0.36.0.nightly.2111` format. Later nightlies for the next base version
-continue updating the same package.
+Nightlies are built after the release they are numbered after, so Arch sorts
+`0.36.0.nightly.2111` between the `0.36.0` and `0.36.1` releases. Nightly users
+receive each stable release and then the nightlies that follow it. The epoch
+comes from an earlier version format and must stay.
 
 This means package-specific changes, such as updating the system Electron
 dependency and launcher in `opentubex`, can be developed here before a release.

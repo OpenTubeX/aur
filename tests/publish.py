@@ -107,7 +107,7 @@ class PublishTests(unittest.TestCase):
     def test_nightly_only_updates_nightly_package(self):
         release = self.resolve('v0.36.1-nightly-2112', 'opentubex-nightly')
         self.assertEqual(release['packages'], 'opentubex-nightly-bin')
-        self.assertEqual(release['pkgver'], '0.36.1nightly.2112')
+        self.assertEqual(release['pkgver'], '0.36.1.nightly.2112')
         original = (self.directory / 'opentubex-bin/.SRCINFO').read_bytes()
         self.metadata(release)
         info = (self.directory / 'opentubex-nightly-bin/.SRCINFO').read_text()
@@ -165,9 +165,11 @@ class PublishTests(unittest.TestCase):
         self.assertNotIn('--archive', (self.directory / 'downloads').read_text())
 
     def test_promotion_and_next_nightly_upgrade(self):
-        versions = []
-        for tag in ('v0.36.0-nightly-2111', 'v0.36.0-beta',
-                    'v0.36.1-nightly-2112'):
+        # Nightlies are tagged after the release they are numbered after.
+        # The first version is the previously published nightly format.
+        versions = ['1:0.35.2nightly.1948-1']
+        for tag in ('v0.36.0-beta', 'v0.36.0-nightly-2111',
+                    'v0.36.1-beta', 'v0.36.1-nightly-2112'):
             release = self.resolve(tag)
             self.metadata(release)
             info = (self.directory / 'opentubex-nightly-bin/.SRCINFO').read_text()
