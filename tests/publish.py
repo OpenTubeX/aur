@@ -62,8 +62,9 @@ class PublishTests(unittest.TestCase):
                               cwd=self.directory, env=self.env | env,
                               text=True, capture_output=True)
 
-    def resolve(self, tag, event=''):
-        result = self.run_step('Resolve release', INPUT_TAG=tag, EVENT_TYPE=event)
+    def resolve(self, tag, event='', event_name=''):
+        result = self.run_step('Resolve release', INPUT_TAG=tag, EVENT_TYPE=event,
+                               EVENT_NAME=event_name)
         self.assertEqual(result.returncode, 0, result.stderr)
         return dict(line.split('=', 1) for line in
                     (self.directory / 'outputs').read_text().splitlines())
@@ -141,6 +142,15 @@ class PublishTests(unittest.TestCase):
         self.assertEqual(recipe.read_bytes(), original)
         self.assertEqual((self.directory / 'opentubex-git/.SRCINFO').read_bytes(),
                          (ROOT / 'opentubex-git/.SRCINFO').read_bytes())
+
+    def test_git_recipe_push_publishes_only_git_recipe(self):
+        release = self.resolve('', event_name='push')
+        self.assertEqual(release['packages'], 'opentubex-git')
+        workflow = (ROOT / '.github/workflows/publish.yml').read_text()
+        for step in ('Download release files', 'Update package metadata', 'Commit package metadata'):
+            with self.subTest(step=step):
+                header = workflow.split(f'      - name: {step}\n', 1)[1].split('\n', 1)[0]
+                self.assertIn("if: github.event_name != 'push'", header)
 
     def test_git_recipe_metadata_and_local_checksums(self):
         package = self.directory / 'opentubex-git'

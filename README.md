@@ -33,6 +33,8 @@ DEB assets are publicly available. The publish workflow then:
 Stable releases publish all four packages, so nightly users receive the stable
 release too. The `opentubex-git` recipe keeps its Git-derived version, package
 release number, and checksums. Nightly releases update only `opentubex-nightly-bin`.
+Changes to `opentubex-git/` pushed to `main` publish that package immediately,
+without waiting for a release.
 
 The nightly package uses epoch `1` and versions such as `0.36.0.nightly.2111`
 for tag `v0.36.0-nightly-2111`, or `0.36.0` for tag `v0.36.0-beta`.

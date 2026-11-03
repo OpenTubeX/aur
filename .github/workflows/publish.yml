@@ -1,6 +1,10 @@
 name: Publish AUR packages
 
 on:
+  # The VCS recipe does not depend on a release, so publish its changes directly.
+  push:
+    branches: [main]
+    paths: ['opentubex-git/**']
   repository_dispatch:
     types: [opentubex-release, opentubex-nightly]
   workflow_dispatch:
@@ -38,8 +42,17 @@ jobs:
         env:
           INPUT_TAG: ${{ github.event.client_payload.tag || inputs.releaseTag }}
           EVENT_TYPE: ${{ github.event.action }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
           set -euo pipefail
+          if [[ "$EVENT_NAME" == 'push' ]]; then
+            {
+              echo 'version=git'
+              echo 'packages=opentubex-git'
+            } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           tag="$INPUT_TAG"
 
           if [[ -z "$tag" ]]; then
@@ -80,6 +93,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Download release files
+        if: github.event_name != 'push'
         env:
           RELEASE_TAG: ${{ steps.release.outputs.tag }}
           ASSET_VERSION: ${{ steps.release.outputs.asset_version }}
@@ -101,6 +115,7 @@ jobs:
           fi
 
       - name: Update package metadata
+        if: github.event_name != 'push'
         env:
           PKGVER: ${{ steps.release.outputs.pkgver }}
           ASSET_VERSION: ${{ steps.release.outputs.asset_version }}
@@ -149,6 +164,7 @@ jobs:
           chown -R root:root "${packages[@]}"
 
       - name: Commit package metadata
+        if: github.event_name != 'push'
         env:
           RELEASE_TAG: ${{ steps.release.outputs.tag }}
           PACKAGES: ${{ steps.release.outputs.packages }}
