@@ -199,9 +199,14 @@ class PublishTests(unittest.TestCase):
                 result = self.run_step('Resolve release', INPUT_TAG=tag, EVENT_TYPE=event)
                 self.assertNotEqual(result.returncode, 0)
 
-    def test_aur_network_operations_retry_twice(self):
+    def test_aur_publication_trusts_checkout_and_retries_network_operations(self):
         self.stub('sleep', 'printf "%s\\n" "$*" >> "$GITHUB_WORKSPACE/delays"\n')
         self.stub('git', '''
+trusted=false
+if [[ "$1" == -c && "$2" == "safe.directory=$GITHUB_WORKSPACE" ]]; then
+  trusted=true
+  shift 2
+fi
 if [[ "$1" == -C ]]; then
   shift 2
 fi
@@ -223,7 +228,13 @@ fi
 case "$operation" in
   clone) mkdir -p "$3" ;;
   diff) [[ "$3" != --quiet ]] ;;
-  log) echo 'test release' ;;
+  log)
+    if [[ "$trusted" != true ]]; then
+      echo 'fatal: detected dubious ownership in checkout' >&2
+      exit 128
+    fi
+    echo 'test release'
+    ;;
   commit) cat > /dev/null ;;
 esac
 ''')
