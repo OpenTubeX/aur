@@ -1,0 +1,211 @@
+From e1d6e707240a139a293767ffb03d08ed3706d1a1 Mon Sep 17 00:00:00 2001
+From: D3SOX <nico@d3sox.me>
+Date: Fri, 6 Nov 2026 21:44:13 +0100
+Subject: [PATCH] fix(build): default to the host architecture
+
+---
+ .github/workflows/build.yml            |  2 +-
+ .github/workflows/release.yml          |  2 +-
+ _scripts/build.mjs                     | 29 +++------
+ package.json                           |  2 +
+ tests/unit/build-architecture.test.mjs | 90 ++++++++++++++++++++++++++
+ 5 files changed, 103 insertions(+), 22 deletions(-)
+ create mode 100644 tests/unit/build-architecture.test.mjs
+
+diff --git a/.github/workflows/build.yml b/.github/workflows/build.yml
+index 3299dd9a0a358..74150ca4091d1 100644
+--- a/.github/workflows/build.yml
++++ b/.github/workflows/build.yml
+@@ -201,7 +201,7 @@ jobs:
+     - name: Build x64 with Node.js ${{ matrix.node-version}}
+       if: contains(matrix.runtime, 'x64')
+       shell: bash
+-      run: pnpm run build
++      run: pnpm run build:x64
+ 
+     - name: Build ARM64 with Node.js ${{ matrix.node-version}}
+       if: contains(matrix.runtime, 'arm64')
+diff --git a/.github/workflows/release.yml b/.github/workflows/release.yml
+index 9c6bb64d6c8eb..f0831df891fc4 100644
+--- a/.github/workflows/release.yml
++++ b/.github/workflows/release.yml
+@@ -198,7 +198,7 @@ jobs:
+       shell: bash
+       run: |
+         for attempt in {1..5}; do
+-          if pnpm run build; then
++          if pnpm run pack && pnpm run build-release x64; then
+             exit 0
+           fi
+           if (( attempt == 5 )); then
+diff --git a/_scripts/build.mjs b/_scripts/build.mjs
+index 2adae2403e189..4066c715ee38d 100644
+--- a/_scripts/build.mjs
++++ b/_scripts/build.mjs
+@@ -6,29 +6,24 @@ import { withWindowsPortable } from './windowsPortable.mjs'
+ import { prepareCastSender } from './castSender.mjs'
+ 
+ const args = process.argv
++const targetArch = args[2] ?? process.arch
++if (targetArch !== 'x64' && targetArch !== 'arm64') {
++  throw new Error(`Unsupported build architecture: ${targetArch}`)
++}
++const arch = Arch[targetArch]
+ 
+ let buildRequests
+ const platform = process.platform
+-await prepareCastSender('dist', platform, args[2] === 'arm64' ? 'arm64' : 'x64')
++await prepareCastSender('dist', platform, targetArch)
+ 
+ if (platform === 'darwin') {
+-  let arch = Arch.x64
+-
+-  if (args[2] === 'arm64') {
+-    arch = Arch.arm64
+-  }
+-
+   buildRequests = [{
+     targets: Platform.MAC.createTarget(['DMG', 'zip', '7z'], arch),
+     config
+   }]
+ } else if (platform === 'win32') {
+-  await prepareWindowsShare(args[2] === 'arm64' ? 'arm64' : 'x64')
+-  let arch = Arch.x64
+-
+-  if (args[2] === 'arm64') {
+-    arch = Arch.arm64
+-  } else {
++  await prepareWindowsShare(targetArch)
++  if (targetArch === 'x64') {
+     await prepareWindowsInterposer()
+   }
+   buildRequests = [
+@@ -38,16 +33,10 @@ if (platform === 'darwin') {
+     },
+     {
+       targets: Platform.WINDOWS.createTarget(['zip', '7z'], arch),
+-      config: withWindowsPortable(config, arch === Arch.arm64 ? 'arm64' : 'x64')
++      config: withWindowsPortable(config, targetArch)
+     }
+   ]
+ } else if (platform === 'linux') {
+-  let arch = Arch.x64
+-
+-  if (args[2] === 'arm64') {
+-    arch = Arch.arm64
+-  }
+-
+   buildRequests = [{
+     targets: Platform.LINUX.createTarget(['deb', 'zip', '7z', 'rpm', 'AppImage', 'pacman'], arch),
+     config
+diff --git a/package.json b/package.json
+index 964994635833a..dcebd22d97afa 100644
+--- a/package.json
++++ b/package.json
+@@ -22,8 +22,10 @@
+   },
+   "scripts": {
+     "build": "pnpm run pack && pnpm run build-release",
++    "build:x64": "pnpm run pack && pnpm run build-release:x64",
+     "build:arm64": "pnpm run pack && pnpm run build-release:arm64",
+     "build-release": "node _scripts/build.mjs",
++    "build-release:x64": "node _scripts/build.mjs x64",
+     "build-release:arm64": "node _scripts/build.mjs arm64",
+     "clean": "node _scripts/clean.mjs",
+     "debug": "node _scripts/dev-runner.js --remote-debug",
+diff --git a/tests/unit/build-architecture.test.mjs b/tests/unit/build-architecture.test.mjs
+new file mode 100644
+index 0000000000000..77e8456742bc3
+--- /dev/null
++++ b/tests/unit/build-architecture.test.mjs
+@@ -0,0 +1,90 @@
++import assert from 'node:assert/strict'
++import { spawnSync } from 'node:child_process'
++import { readFile } from 'node:fs/promises'
++import test from 'node:test'
++import { runInNewContext } from 'node:vm'
++import { load } from 'js-yaml'
++
++const source = (await readFile('_scripts/build.mjs', 'utf8')).replace(/^import .*\n/gm, '')
++const { scripts } = JSON.parse(await readFile('package.json', 'utf8'))
++
++async function runBuild(platform, hostArch, targetArch) {
++  const requests = []
++  const castTargets = []
++  const shareArchitectures = []
++  let interposerPreparations = 0
++  const createTarget = (formats, arch) => ({ formats: Array.from(formats), arch })
++  const argv = ['node', 'build.mjs']
++  if (targetArch !== undefined) argv.push(targetArch)
++
++  await runInNewContext(`(async () => { ${source} })()`, {
++    process: { platform, arch: hostArch, argv },
++    Arch: { x64: 'x64', arm64: 'arm64' },
++    Platform: {
++      MAC: { createTarget },
++      WINDOWS: { createTarget },
++      LINUX: { createTarget }
++    },
++    config: {},
++    prepareCastSender: async (...args) => castTargets.push(args),
++    prepareWindowsShare: async arch => shareArchitectures.push(arch),
++    prepareWindowsInterposer: async () => { interposerPreparations++ },
++    withWindowsPortable: (_config, arch) => ({ portableArch: arch }),
++    build: async request => { requests.push(request); return [] },
++    console: { log () {} }
++  })
++
++  return { requests, castTargets, shareArchitectures, interposerPreparations }
++}
++
++for (const platform of ['linux', 'darwin', 'win32']) {
++  for (const hostArch of ['x64', 'arm64']) {
++    for (const buildScript of ['build', 'build:x64', 'build:arm64']) {
++      const expectedArch = buildScript.split(':')[1] ?? hostArch
++      test(`${buildScript} on ${platform}/${hostArch} selects ${expectedArch}`, async () => {
++        const releaseScript = scripts[buildScript].split(' && ').at(-1).replace(/^pnpm run /, '')
++        const targetArch = scripts[releaseScript].split(' ')[2]
++        const result = await runBuild(platform, hostArch, targetArch)
++
++        assert.deepEqual(result.castTargets, [['dist', platform, expectedArch]])
++        assert.equal(result.requests.length, platform === 'win32' ? 2 : 1)
++        assert.ok(result.requests.every(request => request.targets.arch === expectedArch))
++        assert.ok(result.requests.every(request => request.publish === 'never'))
++        if (platform === 'win32') {
++          assert.deepEqual(result.shareArchitectures, [expectedArch])
++          assert.equal(result.interposerPreparations, expectedArch === 'x64' ? 1 : 0)
++          assert.equal(result.requests[1].config.portableArch, expectedArch)
++        }
++      })
++    }
++  }
++}
++
++test('unsupported host architectures require an explicit supported target', async () => {
++  await assert.rejects(runBuild('linux', 'arm'), /Unsupported build architecture: arm/)
++})
++
++test('unsupported explicit targets are rejected', async () => {
++  await assert.rejects(runBuild('linux', 'x64', 'armv7l'), /Unsupported build architecture: armv7l/)
++})
++
++test('the x64 release job works with the commands available in older releases', async () => {
++  const workflow = load(await readFile('.github/workflows/release.yml', 'utf8'))
++  const step = workflow.jobs.build.steps.find(step => step.name?.startsWith('Build x64'))
++  const result = spawnSync('bash', ['-euc', `
++    pnpm() {
++      [[ $1 == run ]] || return 1
++      case $2 in
++        pack) ;;
++        build-release) [[ $3 == x64 ]] || return 1 ;;
++        *) printf 'Missing script: %s\\n' "$2" >&2; return 1 ;;
++      esac
++      printf '%s\\n' "$*"
++    }
++    sleep() { :; }
++    ${step.run}
++  `], { encoding: 'utf8' })
++
++  assert.equal(result.status, 0, result.stderr)
++  assert.equal(result.stdout, 'run pack\nrun build-release x64\n')
++})
