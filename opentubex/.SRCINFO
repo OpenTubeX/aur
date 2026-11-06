@@ -1,10 +1,11 @@
 pkgbase = opentubex
 	pkgdesc = A highly customizable, privacy-focused desktop YouTube client
 	pkgver = 0.37.4
-	pkgrel = 1
+	pkgrel = 2
 	url = https://opentubex.org
 	changelog = opentubex.changelog
-	arch = any
+	arch = x86_64
+	arch = aarch64
 	license = AGPL-3.0-or-later
 	makedepends = git
 	makedepends = npm
