@@ -13,62 +13,40 @@ Subject: [PATCH] fix(build): default to the host architecture
  create mode 100644 tests/unit/build-architecture.test.mjs
 
 diff --git a/.github/workflows/build.yml b/.github/workflows/build.yml
-index 3299dd9a0a358..74150ca4091d1 100644
+index 3299dd9a0..74150ca40 100644
 --- a/.github/workflows/build.yml
 +++ b/.github/workflows/build.yml
-@@ -201,7 +201,7 @@ jobs:
-     - name: Build x64 with Node.js ${{ matrix.node-version}}
-       if: contains(matrix.runtime, 'x64')
-       shell: bash
+@@ -204 +204 @@ jobs:
 -      run: pnpm run build
 +      run: pnpm run build:x64
- 
-     - name: Build ARM64 with Node.js ${{ matrix.node-version}}
-       if: contains(matrix.runtime, 'arm64')
 diff --git a/.github/workflows/release.yml b/.github/workflows/release.yml
-index 9c6bb64d6c8eb..f0831df891fc4 100644
+index 9c6bb64d6..f0831df89 100644
 --- a/.github/workflows/release.yml
 +++ b/.github/workflows/release.yml
-@@ -198,7 +198,7 @@ jobs:
-       shell: bash
-       run: |
-         for attempt in {1..5}; do
+@@ -201 +201 @@ jobs:
 -          if pnpm run build; then
 +          if pnpm run pack && pnpm run build-release x64; then
-             exit 0
-           fi
-           if (( attempt == 5 )); then
 diff --git a/_scripts/build.mjs b/_scripts/build.mjs
-index 2adae2403e189..4066c715ee38d 100644
+index 2adae2403..4066c715e 100644
 --- a/_scripts/build.mjs
 +++ b/_scripts/build.mjs
-@@ -6,29 +6,24 @@ import { withWindowsPortable } from './windowsPortable.mjs'
- import { prepareCastSender } from './castSender.mjs'
- 
- const args = process.argv
+@@ -8,0 +9,5 @@ const args = process.argv
 +const targetArch = args[2] ?? process.arch
 +if (targetArch !== 'x64' && targetArch !== 'arm64') {
 +  throw new Error(`Unsupported build architecture: ${targetArch}`)
 +}
 +const arch = Arch[targetArch]
- 
- let buildRequests
- const platform = process.platform
+@@ -12 +17 @@ const platform = process.platform
 -await prepareCastSender('dist', platform, args[2] === 'arm64' ? 'arm64' : 'x64')
 +await prepareCastSender('dist', platform, targetArch)
- 
- if (platform === 'darwin') {
+@@ -15,6 +19,0 @@ if (platform === 'darwin') {
 -  let arch = Arch.x64
 -
 -  if (args[2] === 'arm64') {
 -    arch = Arch.arm64
 -  }
 -
-   buildRequests = [{
-     targets: Platform.MAC.createTarget(['DMG', 'zip', '7z'], arch),
-     config
-   }]
- } else if (platform === 'win32') {
+@@ -26,6 +25,2 @@ if (platform === 'darwin') {
 -  await prepareWindowsShare(args[2] === 'arm64' ? 'arm64' : 'x64')
 -  let arch = Arch.x64
 -
@@ -77,45 +55,27 @@ index 2adae2403e189..4066c715ee38d 100644
 -  } else {
 +  await prepareWindowsShare(targetArch)
 +  if (targetArch === 'x64') {
-     await prepareWindowsInterposer()
-   }
-   buildRequests = [
-@@ -38,16 +33,10 @@ if (platform === 'darwin') {
-     },
-     {
-       targets: Platform.WINDOWS.createTarget(['zip', '7z'], arch),
+@@ -41 +36 @@ if (platform === 'darwin') {
 -      config: withWindowsPortable(config, arch === Arch.arm64 ? 'arm64' : 'x64')
 +      config: withWindowsPortable(config, targetArch)
-     }
-   ]
- } else if (platform === 'linux') {
+@@ -45,6 +39,0 @@ if (platform === 'darwin') {
 -  let arch = Arch.x64
 -
 -  if (args[2] === 'arm64') {
 -    arch = Arch.arm64
 -  }
 -
-   buildRequests = [{
-     targets: Platform.LINUX.createTarget(['deb', 'zip', '7z', 'rpm', 'AppImage', 'pacman'], arch),
-     config
 diff --git a/package.json b/package.json
-index 964994635833a..dcebd22d97afa 100644
+index 964994635..dcebd22d9 100644
 --- a/package.json
 +++ b/package.json
-@@ -22,8 +22,10 @@
-   },
-   "scripts": {
-     "build": "pnpm run pack && pnpm run build-release",
+@@ -24,0 +25 @@
 +    "build:x64": "pnpm run pack && pnpm run build-release:x64",
-     "build:arm64": "pnpm run pack && pnpm run build-release:arm64",
-     "build-release": "node _scripts/build.mjs",
+@@ -26,0 +28 @@
 +    "build-release:x64": "node _scripts/build.mjs x64",
-     "build-release:arm64": "node _scripts/build.mjs arm64",
-     "clean": "node _scripts/clean.mjs",
-     "debug": "node _scripts/dev-runner.js --remote-debug",
 diff --git a/tests/unit/build-architecture.test.mjs b/tests/unit/build-architecture.test.mjs
 new file mode 100644
-index 0000000000000..77e8456742bc3
+index 000000000..77e845674
 --- /dev/null
 +++ b/tests/unit/build-architecture.test.mjs
 @@ -0,0 +1,90 @@
