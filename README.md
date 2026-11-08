@@ -9,7 +9,7 @@ and [`opentubex-git`](https://aur.archlinux.org/packages/opentubex-git) AUR pack
 `opentubex-nightly-bin` follows the nightly channel for x86_64 and aarch64,
 including stable releases when they are published. It replaces the stable
 package and uses the same application data. Install it with
-`paru -S opentubex-nightly-bin` once it is published.
+`paru -S opentubex-nightly-bin`.
 
 `opentubex-git` builds from the application's current default branch using the
 system Electron. Its recipe, launcher, desktop file, and `.SRCINFO` are maintained
@@ -25,7 +25,9 @@ DEB assets are publicly available. The publish workflow then:
 
 1. starts with the package files tracked in this repository;
 2. updates release packages' `pkgver`, resets `pkgrel` to 1 when the version
-   changes, refreshes release checksums, and regenerates `.SRCINFO` files;
+   changes, refreshes release checksums, and regenerates `.SRCINFO` files.
+   A package that already has a newer version keeps it, so a replayed or
+   manual run cannot downgrade it;
 3. commits that release metadata back to this repository;
 4. copies the resulting files to AUR and publishes each package when its
    files changed.
