@@ -17,9 +17,10 @@ on:
 permissions:
   contents: write
 
+# Queue every run: a stable release must not be dropped for a later nightly.
 concurrency:
   group: aur-packages
-  cancel-in-progress: false
+  queue: max
 
 jobs:
   publish:
@@ -27,7 +28,6 @@ jobs:
     runs-on: ubuntu-latest
     container: archlinux:base-devel
     env:
-      AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
       GH_TOKEN: ${{ github.token }}
 
     steps:
@@ -199,6 +199,8 @@ jobs:
           fi
 
       - name: Configure AUR access
+        env:
+          AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
         shell: bash
         run: |
           set -euo pipefail
