@@ -3,8 +3,8 @@
 pkgname=opentubex-git
 _pkgname=OpenTubeX
 _ghurl="https://github.com/OpenTubeX/OpenTubeX"
-pkgver=r13031.4842ee9e6
-pkgrel=5
+pkgver=0.37.4.r15.g02d0717ed
+pkgrel=1
 pkgdesc='A highly customizable, privacy-focused desktop YouTube client'
 arch=('x86_64' 'aarch64')
 url="https://opentubex.org"
@@ -24,7 +24,9 @@ sha256sums=('SKIP'
 
 pkgver() {
   cd "$srcdir/$_pkgname"
-  printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+  # v0.37.4-beta-10-ga2d164ad9 becomes 0.37.4.r10.ga2d164ad9.
+  git describe --long --tags --abbrev=9 --match 'v*-beta' \
+    | sed -E 's/^v//; s/-beta-([0-9]+)-g/.r\1.g/'
 }
 
 prepare() {
