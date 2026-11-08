@@ -6,6 +6,7 @@ import gzip
 import hashlib
 import io
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import tarfile
@@ -46,6 +47,10 @@ class PublishTests(unittest.TestCase):
         self.directory = Path(self.temp.name)
         for package in ('opentubex', 'opentubex-bin', 'opentubex-nightly-bin', 'opentubex-git'):
             shutil.copytree(ROOT / package, self.directory / package)
+        # Start below every release the tests publish.
+        for package in ('opentubex', 'opentubex-bin', 'opentubex-nightly-bin'):
+            recipe = self.directory / package / 'PKGBUILD'
+            recipe.write_text(re.sub(r'(?m)^pkgver=.*$', 'pkgver=0.1.0', recipe.read_text()))
         self.bin = self.directory / 'bin'
         self.bin.mkdir()
         self.env = dict(os.environ, GITHUB_WORKSPACE=str(self.directory),
@@ -189,6 +194,16 @@ class PublishTests(unittest.TestCase):
         for older, newer in zip(versions, versions[1:]):
             self.assertEqual(subprocess.check_output(['vercmp', newer, older],
                                                     text=True).strip(), '1')
+
+    def test_replayed_releases_keep_newer_versions(self):
+        for tag in ('v0.36.1-beta', 'v0.36.1-nightly-2112', 'v0.36.0-beta'):
+            self.metadata(self.resolve(tag))
+        def pkgver(package):
+            return re.search(r'(?m)^\tpkgver = (.*)$',
+                             (self.directory / package / '.SRCINFO').read_text())[1]
+        self.assertEqual(pkgver('opentubex-nightly-bin'), '0.36.1.nightly.2112')
+        self.assertEqual(pkgver('opentubex-bin'), '0.36.1')
+        self.assertEqual(pkgver('opentubex'), '0.36.1')
 
     def test_invalid_tags_and_dispatch_mismatches(self):
         for tag, event in (('', 'opentubex-nightly'),

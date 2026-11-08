@@ -134,13 +134,19 @@ jobs:
           fi
 
           for package in "${packages[@]}"; do
-            if [[ "$package" == 'opentubex' || "$package" == 'opentubex-bin' ]]; then
-              cp release-files/opentubex.changelog "$package/opentubex.changelog"
-            fi
-
             # The VCS recipe keeps its Git-derived version and local file checksums.
             if [[ "$package" == 'opentubex-git' ]]; then
               continue
+            fi
+            # A replayed or late event must not replace a newer version.
+            current="$(source "$package/PKGBUILD" && printf '%s' "$pkgver")"
+            if (( $(vercmp "$PKGVER" "$current") < 0 )); then
+              echo "Keeping $package at $current, which is newer than $PKGVER"
+              continue
+            fi
+
+            if [[ "$package" == 'opentubex' || "$package" == 'opentubex-bin' ]]; then
+              cp release-files/opentubex.changelog "$package/opentubex.changelog"
             fi
             if ! grep -qxF "pkgver=${PKGVER}" "$package/PKGBUILD"; then
               sed -i -E "s/^pkgrel=.*/pkgrel=1/" "$package/PKGBUILD"
