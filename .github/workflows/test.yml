@@ -29,3 +29,4 @@ jobs:
           chown -R builder:builder "$GITHUB_WORKSPACE"
           runuser -u builder -- python -I tests/publish.py
           runuser -u builder -- bash tests/package.sh
+          runuser -u builder -- bash tests/build.sh
