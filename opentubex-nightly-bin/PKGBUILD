@@ -20,7 +20,7 @@ arch=('x86_64' 'aarch64')
 url='https://opentubex.org'
 license=('AGPL-3.0-or-later')
 options=('!strip')
-depends=('alsa-lib' 'at-spi2-core' 'gtk3' 'libnotify' 'libsecret' 'libxss'
+depends=('ttf-liberation' 'alsa-lib' 'at-spi2-core' 'gtk3' 'libnotify' 'libsecret' 'libxss'
          'libxtst' 'nss' 'util-linux-libs' 'xdg-utils')
 optdepends=('ffmpeg: Use the system FFmpeg when installed before first launch; configurable later in Settings'
             'yt-dlp: Use the system yt-dlp when installed before first launch; configurable later in Settings')
